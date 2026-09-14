@@ -15,7 +15,6 @@ void printMenuOptions() {
 int main() {
     setlocale(LC_ALL, "Russian");
 
-    // Инициализация данных — 5 разных фильмов с разным временем сеансов
     Cinema myCinema("Звезда");
     myCinema.addSession(Session("Дюна", "Фантастика", "15:00", 10));
     myCinema.addSession(Session("Интерстеллар", "Научная фантастика", "18:30", 50));
@@ -28,7 +27,6 @@ int main() {
     while (true) {
         printMenuOptions();
 
-        // Защита от ввода букв вместо цифр
         if (!(std::cin >> choice)) {
             std::cout << "\nОшибка: Пожалуйста, введите корректное число!\n";
             std::cin.clear();
@@ -37,7 +35,7 @@ int main() {
         }
 
         if (choice == 3) {
-            std::cout << "\nВыход из программы. Освобождение ресурсов...\n";
+            std::cout << "\nВыход из программы. Ресурсы очищены автоматически.\n";
             break;
         }
 
@@ -48,19 +46,20 @@ int main() {
             break;
 
         case 2: {
-            int totalSessions = myCinema.getSessionCount();
+            const auto totalSessions = myCinema.getSessionCount();
             if (totalSessions == 0) {
                 std::cout << "\nОшибка: Нет доступных сеансов!\n";
                 break;
             }
 
-            // Динамическое меню покупки: вычитывает все сеансы из кинотеатра
             std::cout << "\nВыберите фильм для покупки билетов:\n";
-            for (int i = 0; i < totalSessions; ++i) {
-                Session* s = myCinema.getSession(i);
-                std::cout << (i + 1) << ". \"" << s->getMovieTitle()
-                    << "\" [Время: " << s->getStartTime()
-                    << " | Свободно: " << s->getAvailableSeats() << "]\n";
+            for (auto i = 0; i < totalSessions; ++i) {
+                const Session* s = myCinema.getSession(i);
+                if (s != nullptr) {
+                    std::cout << (i + 1) << ". \"" << s->getMovieTitle()
+                        << "\" [Время: " << s->getStartTime()
+                        << " | Свободно: " << s->getAvailableSeats() << "]\n";
+                }
             }
             std::cout << "Ваш выбор (1-" << totalSessions << "): ";
 
@@ -81,10 +80,12 @@ int main() {
                 break;
             }
 
-            // Определяем название выбранного фильма по индексу
-            std::string selectedMovie = myCinema.getSession(movieChoice - 1)->getMovieTitle();
-            std::cout << "\n";
-            myCinema.buyTicket(selectedMovie, tickets);
+            const Session* selectedSession = myCinema.getSession(movieChoice - 1);
+            if (selectedSession != nullptr) {
+                std::string selectedMovie = selectedSession->getMovieTitle();
+                std::cout << "\n";
+                myCinema.buyTicket(selectedMovie, tickets);
+            }
             break;
         }
 

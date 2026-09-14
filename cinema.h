@@ -2,20 +2,19 @@
 #define CINEMA_H
 
 #include <string>
+#include <vector>
+#include <string_view>
 
-// =================================================================
-// Объявление класса Session (Сеанс)
-// =================================================================
 class Session {
 private:
     std::string movieTitle;
     std::string genre;
     std::string startTime;
     int totalSeats;
-    int soldSeats;
+    int soldSeats = 0; 
 
 public:
-    Session(std::string title, std::string movieGenre, std::string time, int seats);
+    Session(std::string_view title, std::string_view movieGenre, std::string_view time, int seats);
 
     std::string getMovieTitle() const;
     std::string getGenre() const;
@@ -24,36 +23,23 @@ public:
     int getSoldSeats() const;
     int getAvailableSeats() const;
 
-    void setStartTime(const std::string& newTime);
+    void setStartTime(std::string_view newTime);
     bool bookSeats(int count);
     void printInfo() const;
 };
 
-// =================================================================
-// Объявление класса Cinema (Кинотеатр)
-// =================================================================
 class Cinema {
 private:
     std::string name;
-    Session** sessions;
-    int count;
-    int capacity;
-
-    void resize();
+    std::vector<Session> sessions;
 
 public:
-    Cinema(std::string cinemaName);
-    ~Cinema();
-    Cinema(const Cinema& other);
-    Cinema& operator=(const Cinema& other);
-
+    explicit Cinema(std::string_view cinemaName);
     void addSession(const Session& session);
     void showSchedule() const;
-    void buyTicket(const std::string& movieTitle, int seatCount);
-
-    // Новые геттеры для динамического построения меню покупки
+    void buyTicket(std::string_view movieTitle, int seatCount);
     int getSessionCount() const;
-    Session* getSession(int index) const;
+    const Session* getSession(int index) const;
 };
 
-#endif // CINEMA_H
+#endif 
