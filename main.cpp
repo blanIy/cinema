@@ -3,7 +3,6 @@
 #include <array>
 #include <string_view>
 
-// Добавили конструктор для структуры, чтобы emplace_back мог конструировать её на месте
 struct TicketPurchase {
     std::string movieTitle;
     std::string day;
@@ -44,11 +43,9 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
         std::cin.clear(); std::cin.ignore(10000, '\n'); return;
     }
 
-    // Решение вопроса №2: используем современный std::array вместо C-style массива
     const std::array<std::string_view, 3> days = { "Пятница", "Суббота", "Воскресенье" };
     std::string_view selectedDay = days[static_cast<size_t>(dChoice - 1)];
 
-    // Ищем все сеансы на этот день
     auto available = myCinema.getSessionsByDay(selectedDay);
     if (available.empty()) {
         std::cout << "\nК сожалению, на " << selectedDay << " сеансов нет.\n";
@@ -72,7 +69,6 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
     }
     const auto* chosenSession = available[sChoice - 1];
 
-    // Выбор категории билета
     std::cout << "\n--- ШАГ 3: Выберите класс места ---\n";
     std::cout << "1. Обычное место (цена: 12.00 руб.)\n";
     std::cout << "2. VIP место     (цена: 25.00 руб.)\n";
@@ -100,7 +96,6 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
             double price = isVip ? 25.00 : 12.00;
             cart.totalSpent += (tickets * price);
 
-            // Решение вопроса №3: заменили push_back на emplace_back для оптимизации скорости
             cart.purchases.emplace_back(title, selectedDay, time, isVip, tickets, price);
 
             std::cout << "\nУспешно! Вы приобрели билеты в количестве " << tickets << " шт.\n";
@@ -112,7 +107,6 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
     }
 }
 
-// Решение вопроса №1: вынесли личный кабинет в отдельную функцию, убрав вложенность
 void showPersonalCabinet(const MyCart& cart) {
     std::cout << "\n=== Мой личный кабинет ===\n";
     if (cart.purchases.empty()) {
@@ -139,7 +133,6 @@ int main() {
     Cinema myCinema("Звезда");
     MyCart myCart;
 
-    // Предзагружаем афишу сеансов
     myCinema.addSession(Session("Начало", "Триллер", "Пятница", "15:00", 20, 5));
     myCinema.addSession(Session("Дюна", "Фантастика", "Пятница", "18:00", 15, 2));
     myCinema.addSession(Session("Матрица", "Боевик", "Пятница", "21:00", 30, 8));
@@ -176,7 +169,7 @@ int main() {
             handleTicketPurchase(myCinema, myCart);
             break;
         case 3:
-            showPersonalCabinet(myCart); // Вызываем чистую функцию
+            showPersonalCabinet(myCart); 
             break;
         default:
             std::cout << "\nОшибка: Неверный пункт меню! Выберите число от 1 до 4.\n";
