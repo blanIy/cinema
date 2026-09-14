@@ -1,6 +1,9 @@
 #include "cinema.h"
 #include <iostream>
+#include <array>
+#include <string_view>
 
+// Добавили конструктор для структуры, чтобы emplace_back мог конструировать её на месте
 struct TicketPurchase {
     std::string movieTitle;
     std::string day;
@@ -8,7 +11,12 @@ struct TicketPurchase {
     bool isVip = false;
     int count = 0;
     double price = 0.0;
+
+    TicketPurchase(std::string_view title, std::string_view d, std::string_view t, bool vip, int cnt, double p)
+        : movieTitle(title), day(d), time(t), isVip(vip), count(cnt), price(p) {
+    }
 };
+
 struct MyCart {
     std::vector<TicketPurchase> purchases;
     double totalSpent = 0.0;
@@ -35,8 +43,12 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
         std::cout << "\nОшибка: Некорректный выбор дня!\n";
         std::cin.clear(); std::cin.ignore(10000, '\n'); return;
     }
-    std::string days[] = { "Пятница", "Суббота", "Воскресенье" };
-    std::string selectedDay = days[dChoice - 1];
+
+    // Решение вопроса №2: используем современный std::array вместо C-style массива
+    const std::array<std::string_view, 3> days = { "Пятница", "Суббота", "Воскресенье" };
+    std::string_view selectedDay = days[static_cast<size_t>(dChoice - 1)];
+
+    // Ищем все сеансы на этот день
     auto available = myCinema.getSessionsByDay(selectedDay);
     if (available.empty()) {
         std::cout << "\nК сожалению, на " << selectedDay << " сеансов нет.\n";
@@ -59,6 +71,8 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
         std::cin.clear(); std::cin.ignore(10000, '\n'); return;
     }
     const auto* chosenSession = available[sChoice - 1];
+
+    // Выбор категории билета
     std::cout << "\n--- ШАГ 3: Выберите класс места ---\n";
     std::cout << "1. Обычное место (цена: 12.00 руб.)\n";
     std::cout << "2. VIP место     (цена: 25.00 руб.)\n";
@@ -85,7 +99,9 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
         if (myCinema.buyTicketForSession(title, selectedDay, time, isVip, tickets)) {
             double price = isVip ? 25.00 : 12.00;
             cart.totalSpent += (tickets * price);
-            cart.purchases.push_back({ title, selectedDay, time, isVip, tickets, price });
+
+            // Решение вопроса №3: заменили push_back на emplace_back для оптимизации скорости
+            cart.purchases.emplace_back(title, selectedDay, time, isVip, tickets, price);
 
             std::cout << "\nУспешно! Вы приобрели билеты в количестве " << tickets << " шт.\n";
         }
@@ -96,11 +112,34 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
     }
 }
 
+// Решение вопроса №1: вынесли личный кабинет в отдельную функцию, убрав вложенность
+void showPersonalCabinet(const MyCart& cart) {
+    std::cout << "\n=== Мой личный кабинет ===\n";
+    if (cart.purchases.empty()) {
+        std::cout << "История покупок пуста. Вы еще не приобрели ни одного билета.\n";
+    }
+    else {
+        std::cout << "Детализированная история ваших покупок:\n";
+        for (const auto& purchase : cart.purchases) {
+            std::cout << "- Фильм: \"" << purchase.movieTitle << "\" | "
+                << purchase.day << " в " << purchase.time << "\n"
+                << "  Класс места: " << (purchase.isVip ? "VIP" : "Обычный")
+                << " | Билетов: " << purchase.count << " шт."
+                << " | На сумму: " << (purchase.count * purchase.price) << " руб.\n";
+        }
+    }
+    std::cout << "---------------------------\n";
+    std::cout << "Итоговая сумма покупок: " << cart.totalSpent << " руб.\n";
+    std::cout << "===========================\n";
+}
+
 int main() {
     setlocale(LC_ALL, "Russian");
 
     Cinema myCinema("Звезда");
     MyCart myCart;
+
+    // Предзагружаем афишу сеансов
     myCinema.addSession(Session("Начало", "Триллер", "Пятница", "15:00", 20, 5));
     myCinema.addSession(Session("Дюна", "Фантастика", "Пятница", "18:00", 15, 2));
     myCinema.addSession(Session("Матрица", "Боевик", "Пятница", "21:00", 30, 8));
@@ -137,23 +176,7 @@ int main() {
             handleTicketPurchase(myCinema, myCart);
             break;
         case 3:
-            std::cout << "\n=== Мой личный кабинет ===\n";
-            if (myCart.purchases.empty()) {
-                std::cout << "История покупок пуста. Вы еще не приобрели ни одного билета.\n";
-            }
-            else {
-                std::cout << "Детализированная история ваших покупок:\n";
-                for (const auto& purchase : myCart.purchases) {
-                    std::cout << "- Фильм: \"" << purchase.movieTitle << "\" | "
-                        << purchase.day << " в " << purchase.time << "\n"
-                        << "  Класс места: " << (purchase.isVip ? "VIP" : "Обычный")
-                        << " | Билетов: " << purchase.count << " шт."
-                        << " | На сумму: " << (purchase.count * purchase.price) << " руб.\n";
-                }
-            }
-            std::cout << "---------------------------\n";
-            std::cout << "Итоговая сумма покупок: " << myCart.totalSpent << " руб.\n";
-            std::cout << "===========================\n";
+            showPersonalCabinet(myCart); // Вызываем чистую функцию
             break;
         default:
             std::cout << "\nОшибка: Неверный пункт меню! Выберите число от 1 до 4.\n";
