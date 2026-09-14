@@ -1,25 +1,35 @@
 #include "cinema.h"
 #include <iostream>
 
-Session::Session(std::string_view title, std::string_view movieGenre, std::string_view time, int seats)
-    : movieTitle(title), genre(movieGenre), startTime(time), totalSeats(seats) {
-} 
+Session::Session(std::string_view title, std::string_view movieGenre, std::string_view sessionDate,
+    std::string_view time, int regularSeats, int vipSeats)
+    : movieTitle(title), genre(movieGenre), date(sessionDate), startTime(time),
+    totalRegularSeats(regularSeats), totalVipSeats(vipSeats) {
+}
 
 std::string Session::getMovieTitle() const { return movieTitle; }
 std::string Session::getGenre() const { return genre; }
 std::string Session::getStartTime() const { return startTime; }
-int Session::getTotalSeats() const { return totalSeats; }
-int Session::getSoldSeats() const { return soldSeats; }
-int Session::getAvailableSeats() const { return totalSeats - soldSeats; }
+std::string Session::getDate() const { return date; }
 
-void Session::setStartTime(std::string_view newTime) {
-    startTime = newTime;
+int Session::getAvailableRegularSeats() const { return totalRegularSeats - soldRegularSeats; }
+int Session::getAvailableVipSeats() const { return totalVipSeats - soldVipSeats; }
+int Session::getTotalRegularSeats() const { return totalRegularSeats; }
+int Session::getTotalVipSeats() const { return totalVipSeats; }
+
+bool Session::bookRegularSeats(int count) {
+    if (count <= 0) return false;
+    if (soldRegularSeats + count <= totalRegularSeats) {
+        soldRegularSeats += count;
+        return true;
+    }
+    return false;
 }
 
-bool Session::bookSeats(int count) {
+bool Session::bookVipSeats(int count) {
     if (count <= 0) return false;
-    if (soldSeats + count <= totalSeats) {
-        soldSeats += count;
+    if (soldVipSeats + count <= totalVipSeats) {
+        soldVipSeats += count;
         return true;
     }
     return false;
@@ -27,54 +37,48 @@ bool Session::bookSeats(int count) {
 
 void Session::printInfo() const {
     std::cout << "Фильм: \"" << movieTitle << "\" (" << genre << ")\n"
-        << "Время начала: " << startTime << "\n"
-        << "Всего мест: " << totalSeats << " | Продано: " << soldSeats
-        << " | Свободно: " << getAvailableSeats() << "\n"
+        << "Сеанс: " << date << " в " << startTime << "\n"
+        << "Обычные места: свободно " << getAvailableRegularSeats() << " из " << totalRegularSeats << "\n"
+        << "VIP места:     свободно " << getAvailableVipSeats() << " из " << totalVipSeats << "\n"
         << "----------------------------------------\n";
 }
-Cinema::Cinema(std::string_view cinemaName)
-    : name(cinemaName) {
-}
+
+Cinema::Cinema(std::string_view cinemaName) : name(cinemaName) {}
 
 void Cinema::addSession(const Session& session) {
     sessions.push_back(session);
 }
 
 void Cinema::showSchedule() const {
-    std::cout << "=== Расписание кинотеатра \"" << name << "\" ===\n\n";
+    std::cout << "=== Текущая афиша кинотеатра \"" << name << "\" ===\n\n";
     if (sessions.empty()) {
         std::cout << "Сеансов пока нет.\n";
         return;
     }
-    for (const auto& session : sessions) {
-        session.printInfo();
+    for (const auto& s : sessions) {
+        s.printInfo();
     }
 }
 
-void Cinema::buyTicket(std::string_view movieTitle, int seatCount) {
-    std::cout << "Попытка покупки билетов (" << seatCount << " шт.) на фильм \"" << movieTitle << "\":\n";
-    for (auto& session : sessions) {
-        if (session.getMovieTitle() == movieTitle) {
-            if (session.bookSeats(seatCount)) {
-                std::cout << "Успешно! Билеты приобретены.\n\n";
-            }
-            else {
-                std::cout << "Ошибка: Недостаточно свободных мест! Доступно всего: "
-                    << session.getAvailableSeats() << ".\n\n";
-            }
-            return;
+std::vector<const Session*> Cinema::getSessionsByDay(std::string_view sessionDate) const {
+    std::vector<const Session*> result;
+    for (const auto& s : sessions) {
+        if (s.getDate() == sessionDate) {
+            result.push_back(&s);
         }
     }
-    std::cout << "Ошибка: Сеанс на фильм \"" << movieTitle << "\" не найден.\n\n";
+    return result;
 }
 
-int Cinema::getSessionCount() const {
-    return static_cast<int>(sessions.size());
-}
-
-const Session* Cinema::getSession(int index) const {
-    if (index >= 0 && index < static_cast<int>(sessions.size())) {
-        return &sessions[index];
+bool Cinema::buyTicketForSession(std::string_view title, std::string_view sessionDate,
+    std::string_view sessionTime, bool isVip, int seatCount) {
+    for (auto& s : sessions) {
+        if (s.getMovieTitle() == title && s.getDate() == sessionDate && s.getStartTime() == sessionTime) {
+            if (isVip) {
+                return s.bookVipSeats(seatCount);
+            }
+            return s.bookRegularSeats(seatCount);
+        }
     }
-    return nullptr;
+    return false;
 }

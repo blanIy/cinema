@@ -9,22 +9,31 @@ class Session {
 private:
     std::string movieTitle;
     std::string genre;
-    std::string startTime;
-    int totalSeats;
-    int soldSeats = 0; 
+    std::string date;    
+    std::string startTime; 
+
+    int totalRegularSeats = 0;
+    int soldRegularSeats = 0;
+    int totalVipSeats = 0;
+    int soldVipSeats = 0;
 
 public:
-    Session(std::string_view title, std::string_view movieGenre, std::string_view time, int seats);
+    Session(std::string_view title, std::string_view movieGenre, std::string_view sessionDate,
+        std::string_view time, int regularSeats, int vipSeats);
 
     std::string getMovieTitle() const;
     std::string getGenre() const;
     std::string getStartTime() const;
-    int getTotalSeats() const;
-    int getSoldSeats() const;
-    int getAvailableSeats() const;
+    std::string getDate() const;
 
-    void setStartTime(std::string_view newTime);
-    bool bookSeats(int count);
+    int getAvailableRegularSeats() const;
+    int getAvailableVipSeats() const;
+    int getTotalRegularSeats() const;
+    int getTotalVipSeats() const;
+
+    bool bookRegularSeats(int count);
+    bool bookVipSeats(int count);
+
     void printInfo() const;
 };
 
@@ -35,11 +44,12 @@ private:
 
 public:
     explicit Cinema(std::string_view cinemaName);
+
     void addSession(const Session& session);
     void showSchedule() const;
-    void buyTicket(std::string_view movieTitle, int seatCount);
-    int getSessionCount() const;
-    const Session* getSession(int index) const;
+    std::vector<const Session*> getSessionsByDay(std::string_view sessionDate) const;
+    bool buyTicketForSession(std::string_view title, std::string_view sessionDate,
+        std::string_view sessionTime, bool isVip, int seatCount);
 };
 
 #endif 
