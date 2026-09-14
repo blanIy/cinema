@@ -1,6 +1,4 @@
-#ifndef CINEMA_H
-#define CINEMA_H
-
+#pragma once
 #include <string>
 #include <vector>
 #include <string_view>
@@ -59,5 +57,3 @@ public:
     Session* getSession(int index);
     const Session* getSession(int index) const;
 };
-
-#endif
