@@ -11,6 +11,45 @@ void printMenuOptions() {
     std::cout << "========================================\n";
     std::cout << "Выберите пункт меню (1-3): ";
 }
+void handleTicketPurchase(const Cinema& myCinema) {
+    const auto totalSessions = myCinema.getSessionCount();
+    if (totalSessions == 0) {
+        std::cout << "\nОшибка: Нет доступных сеансов!\n";
+        return;
+    }
+
+    std::cout << "\nВыберите фильм для покупки билетов:\n";
+    for (auto i = 0; i < totalSessions; ++i) {
+        if (const auto* s = myCinema.getSession(i); s != nullptr) {
+            std::cout << (i + 1) << ". \"" << s->getMovieTitle()
+                << "\" [Время: " << s->getStartTime()
+                << " | Свободно: " << s->getAvailableSeats() << "]\n";
+        }
+    }
+    std::cout << "Ваш выбор (1-" << totalSessions << "): ";
+
+    int movieChoice = 0;
+    if (!(std::cin >> movieChoice) || movieChoice < 1 || movieChoice > totalSessions) {
+        std::cout << "\nОшибка: Неверный выбор сеанса!\n";
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        return;
+    }
+
+    std::cout << "Введите количество билетов: ";
+    int tickets = 0;
+    if (!(std::cin >> tickets) || tickets <= 0) {
+        std::cout << "\nОшибка: Введено некорректное количество билетов!\n";
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        return;
+    }
+    if (const auto* selectedSession = myCinema.getSession(movieChoice - 1); selectedSession != nullptr) {
+        std::string selectedMovie = selectedSession->getMovieTitle();
+        std::cout << "\n";
+        const_cast<Cinema&>(myCinema).buyTicket(selectedMovie, tickets);
+    }
+}
 
 int main() {
     setlocale(LC_ALL, "Russian");
@@ -45,49 +84,9 @@ int main() {
             myCinema.showSchedule();
             break;
 
-        case 2: {
-            const auto totalSessions = myCinema.getSessionCount();
-            if (totalSessions == 0) {
-                std::cout << "\nОшибка: Нет доступных сеансов!\n";
-                break;
-            }
-
-            std::cout << "\nВыберите фильм для покупки билетов:\n";
-            for (auto i = 0; i < totalSessions; ++i) {
-                const Session* s = myCinema.getSession(i);
-                if (s != nullptr) {
-                    std::cout << (i + 1) << ". \"" << s->getMovieTitle()
-                        << "\" [Время: " << s->getStartTime()
-                        << " | Свободно: " << s->getAvailableSeats() << "]\n";
-                }
-            }
-            std::cout << "Ваш выбор (1-" << totalSessions << "): ";
-
-            int movieChoice = 0;
-            if (!(std::cin >> movieChoice) || movieChoice < 1 || movieChoice > totalSessions) {
-                std::cout << "\nОшибка: Неверный выбор сеанса!\n";
-                std::cin.clear();
-                std::cin.ignore(10000, '\n');
-                break;
-            }
-
-            std::cout << "Введите количество билетов: ";
-            int tickets = 0;
-            if (!(std::cin >> tickets) || tickets <= 0) {
-                std::cout << "\nОшибка: Введено некорректное количество билетов!\n";
-                std::cin.clear();
-                std::cin.ignore(10000, '\n');
-                break;
-            }
-
-            const Session* selectedSession = myCinema.getSession(movieChoice - 1);
-            if (selectedSession != nullptr) {
-                std::string selectedMovie = selectedSession->getMovieTitle();
-                std::cout << "\n";
-                myCinema.buyTicket(selectedMovie, tickets);
-            }
+        case 2:
+            handleTicketPurchase(myCinema);
             break;
-        }
 
         default:
             std::cout << "\nОшибка: Неверный пункт меню! Выберите число от 1 до 3.\n";
