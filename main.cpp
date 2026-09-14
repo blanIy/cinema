@@ -28,9 +28,10 @@ void printMenuOptions() {
     std::cout << "1. Показать афишу сеансов\n";
     std::cout << "2. Купить билеты (Выбор дня и фильма)\n";
     std::cout << "3. Мой личный кабинет / Корзина покупок\n";
-    std::cout << "4. Выйти из кинотеатра\n";
+    std::cout << "4. Перенести время сеанса (Отредактировать сеанс)\n";
+    std::cout << "5. Выйти из кинотеатра\n";
     std::cout << "========================================\n";
-    std::cout << "Выберите действие (1-4): ";
+    std::cout << "Выберите действие (1-5): ";
 }
 
 void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
@@ -42,7 +43,6 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
         std::cout << "\nОшибка: Некорректный выбор дня!\n";
         std::cin.clear(); std::cin.ignore(10000, '\n'); return;
     }
-
     const std::array<std::string_view, 3> days = { "Пятница", "Суббота", "Воскресенье" };
     std::string_view selectedDay = days[static_cast<size_t>(dChoice - 1)];
 
@@ -95,9 +95,7 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
         if (myCinema.buyTicketForSession(title, selectedDay, time, isVip, tickets)) {
             double price = isVip ? 25.00 : 12.00;
             cart.totalSpent += (tickets * price);
-
             cart.purchases.emplace_back(title, selectedDay, time, isVip, tickets, price);
-
             std::cout << "\nУспешно! Вы приобрели билеты в количестве " << tickets << " шт.\n";
         }
         else {
@@ -105,6 +103,47 @@ void handleTicketPurchase(Cinema& myCinema, MyCart& cart) {
             std::cout << "\nОшибка: Мест выбранного класса недостаточно! Доступно свободных: " << availableSeats << ".\n";
         }
     }
+}
+
+void handleRescheduleSession(Cinema& myCinema) {
+    const auto totalSessions = myCinema.getSessionCount();
+    if (totalSessions == 0) {
+        std::cout << "\nОшибка: Сеансов пока нет!\n";
+        return;
+    }
+
+    std::cout << "\n--- Изменение времени начала сеанса ---\n";
+    for (auto i = 0; i < totalSessions; ++i) {
+        if (const auto* s = myCinema.getSession(i); s != nullptr) {
+            std::cout << (i + 1) << ". \"" << s->getMovieTitle() << "\" | "
+                << s->getDate() << " (Текущее время: " << s->getStartTime() << ")\n";
+        }
+    }
+    std::cout << "Выберите сеанс для изменения времени (1-" << totalSessions << "): ";
+    int sChoice = 0;
+    if (!(std::cin >> sChoice) || sChoice < 1 || sChoice > totalSessions) {
+        std::cout << "\nОшибка: Неверный выбор сеанса!\n";
+        std::cin.clear(); std::cin.ignore(10000, '\n'); return;
+    }
+
+    auto* sessionToEdit = myCinema.getSession(sChoice - 1);
+    if (sessionToEdit == nullptr) return;
+
+    std::cout << "\nВыберите новое время для сеанса \"" << sessionToEdit->getMovieTitle() << "\":\n";
+    std::cout << "1. 15:00\n2. 18:00\n3. 21:00\n";
+    std::cout << "Ваш выбор (1-3): ";
+    int tChoice = 0;
+    if (!(std::cin >> tChoice) || tChoice < 1 || tChoice > 3) {
+        std::cout << "\nОшибка: Некорректный выбор времени!\n";
+        std::cin.clear(); std::cin.ignore(10000, '\n'); return;
+    }
+
+    const std::array<std::string_view, 3> times = { "15:00", "18:00", "21:00" };
+    std::string_view newTime = times[static_cast<size_t>(tChoice - 1)];
+
+    sessionToEdit->setStartTime(newTime);
+    std::cout << "\nУспешно! Время сеанса фильма \"" << sessionToEdit->getMovieTitle()
+        << "\" изменено на " << newTime << ".\n";
 }
 
 void showPersonalCabinet(const MyCart& cart) {
@@ -155,7 +194,7 @@ int main() {
             continue;
         }
 
-        if (choice == 4) {
+        if (choice == 5) {
             std::cout << "\nСпасибо за визит! До встречи в кинотеатре \"Звезда\"!\n";
             break;
         }
@@ -169,10 +208,13 @@ int main() {
             handleTicketPurchase(myCinema, myCart);
             break;
         case 3:
-            showPersonalCabinet(myCart); 
+            showPersonalCabinet(myCart);
+            break;
+        case 4:
+            handleRescheduleSession(myCinema);
             break;
         default:
-            std::cout << "\nОшибка: Неверный пункт меню! Выберите число от 1 до 4.\n";
+            std::cout << "\nОшибка: Неверный пункт меню! Выберите число от 1 до 5.\n";
             break;
         }
     }

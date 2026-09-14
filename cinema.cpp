@@ -17,6 +17,10 @@ int Session::getAvailableVipSeats() const { return totalVipSeats - soldVipSeats;
 int Session::getTotalRegularSeats() const { return totalRegularSeats; }
 int Session::getTotalVipSeats() const { return totalVipSeats; }
 
+void Session::setStartTime(std::string_view newTime) {
+    startTime = newTime;
+}
+
 bool Session::bookRegularSeats(int count) {
     if (count <= 0) return false;
     if (soldRegularSeats + count <= totalRegularSeats) {
@@ -81,4 +85,22 @@ bool Cinema::buyTicketForSession(std::string_view title, std::string_view sessio
         }
     }
     return false;
+}
+
+int Cinema::getSessionCount() const {
+    return static_cast<int>(sessions.size());
+}
+
+Session* Cinema::getSession(int index) {
+    if (index >= 0 && index < static_cast<int>(sessions.size())) {
+        return &sessions[index];
+    }
+    return nullptr;
+}
+
+const Session* Cinema::getSession(int index) const {
+    if (index >= 0 && index < static_cast<int>(sessions.size())) {
+        return &sessions[index];
+    }
+    return nullptr;
 }
