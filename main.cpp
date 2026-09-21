@@ -1,5 +1,6 @@
-#include "cinema.h"
+#include "Cinema.h"
 #include <iostream>
+#include <vector>
 #include <array>
 #include <string_view>
 
